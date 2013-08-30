@@ -120,6 +120,7 @@ mem)	# Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgroup
 	  else 	echo "LXC ${container} OK - Used Memory: ${used_perc}% (${used_output})|mem_used=${used}B;0;0;0;${limit}"
 		exit $STATE_OK
 	  fi
+	else echo "LXC ${container} OK - Used Memory: ${used_output}|mem_used=${used}B;0;0;0;${limit}"; exit $STATE_OK
 	fi
 	;;
 esac
