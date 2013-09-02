@@ -26,11 +26,12 @@
 # 20130902 Added cgroup kernel boot parameter check (cgroup_active)            #
 # 20130902 Fixed previous cgroup check (see issue #1)			       #
 # 20130902 Activated lxc_exists verification (finally turned to lxc_running)   #
+# 20130902 Added new check type (auto)                                         #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
 # Definition of variables
-version="0.2.4"
+version="0.3.0"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
@@ -38,7 +39,7 @@ STATE_UNKNOWN=3         # define the exit code if status is Unknown
 PATH=/usr/local/bin:/usr/bin:/bin # Set path
 ################################################################################
 # The following commands are required
-for cmd in lxc-ls lxc-cgroup grep egrep awk; 
+for cmd in lxc-info lxc-ls lxc-list lxc-cgroup grep egrep awk sed; 
 do if ! `which ${cmd} 1>/dev/null`
   then echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
   exit ${STATE_UNKNOWN}
@@ -49,7 +50,7 @@ done
 help="$0 v ${version} (c) 2013 Claudio Kuenzler
 Usage: $0 -n container -t type [-u unit] [-w warning] [-c critical]
 Options:\n\t-n name of container\n\t-t type to check (see list below)\n\t[-u unit of output values (k|m|g)]\n\t[-w warning threshold (percent)]\n\t[-c critical threshold (percent)]
-Types:\n\tmem -> Check the memory usage of the given container\n\tswap -> Check the swap usage"
+Types:\n\tmem -> Check the memory usage of the given container\n\tswap -> Check the swap usage\n\tauto -> Check autostart of container (-n ALL possible)"
 ################################################################################
 # Check for people who need help - aren't we all nice ;-)
 if [ "${1}" = "--help" -o "${#}" = "0" ];
@@ -136,6 +137,27 @@ mem)	# Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgroup
 		exit $STATE_OK
 	  fi
 	else echo "LXC ${container} OK - Used Memory: ${used_output}|mem=${used}B;0;0;0;${limit}"; exit $STATE_OK
+	fi
+	;;
+
+auto)	# Autostart check
+	if [[ ${container} = "ALL" ]]
+	then 
+	  i=0
+	  for lxc in $(lxc-ls -1 | sort -u ); do
+	  if [[ $(lxc-info -n ${lxc} -s | awk '{print $2}') = "RUNNING" ]]
+	  then [[ -n $(lxc-list | grep ${lxc} | grep "(auto)") ]] || error[${i}]="${lxc} "
+	  fi
+	  done
+	  if [[ ${#error[*]} -gt 0 ]]
+	  then echo "LXC AUTOSTART CRITICAL: ${error[*]}"; exit $STATE_CRITICAL
+	  else echo "LXC AUTOSTART OK"; exit $STATE_OK
+	  fi
+	else 
+	  if [[ -z $(lxc-list | grep ${container} | grep "(auto)") ]]
+	  then echo "LXC AUTOSTART CRITICAL: ${container}"; exit $STATE_CRITICAL
+	  else echo "LXC AUTOSTART OK"; exit $STATE_OK
+	  fi
 	fi
 	;;
 esac
