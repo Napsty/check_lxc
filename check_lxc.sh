@@ -24,11 +24,12 @@
 # History:                                                                     #
 # 20130830 Finished first check (mem)                                          #
 # 20130902 Added cgroup kernel boot parameter check (cgroup_active)            #
+# 20130902 Fixed previous cgroup check (see issue #1)			       #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
 # Definition of variables
-version="0.2.0"
+version="0.2.1"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
@@ -80,20 +81,19 @@ fi
 #}
 
 threshold_sense() {
-	if [[ -n $warning ]] && [[ -z $critical ]]; then echo "Both warning and critical thresholds must be set"; exit $STATE_UNKNOWN; fi
-	if [[ -z $warning ]] && [[ -n $critical ]]; then echo "Both warning and critical thresholds must be set"; exit $STATE_UNKNOWN; fi
-	if [[ $warning -gt $critical ]]; then echo "Warning threshold cannot be greater than critical"; exit $STATE_UNKNOWN; fi
+if [[ -n $warning ]] && [[ -z $critical ]]; then echo "Both warning and critical thresholds must be set"; exit $STATE_UNKNOWN; fi
+if [[ -z $warning ]] && [[ -n $critical ]]; then echo "Both warning and critical thresholds must be set"; exit $STATE_UNKNOWN; fi
+if [[ $warning -gt $critical ]]; then echo "Warning threshold cannot be greater than critical"; exit $STATE_UNKNOWN; fi
 }
-
-cgroup_active() {
-	        [[ -n $(cat /proc/cmdline | grep cgroup_enable) ]] || echo "cgroup is not defined as kernel boot parameter"; exit $STATE_UNKNOWN
-	}
+cgroup_memory_active() {
+if [[ $(cat /proc/cgroups | grep memory | awk '{print $4}') -eq 0 ]]; then echo "cgroup is not defined as kernel boot parameter"; exit $STATE_UNKNOWN; fi
+}
 ################################################################################
 # Checks
 case ${type} in
 mem)	# Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgroups/memory.txt
-	# cgroup must be enable as kernel boot parameter
-	cgroup_active
+	# cgroup memory support must be enabled
+	cgroup_memory_active
 
 	# Get the values
 	#used=$(lxc-cgroup -n ${container} memory.usage_in_bytes)
