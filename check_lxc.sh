@@ -23,11 +23,12 @@
 #                                                                              #
 # History:                                                                     #
 # 20130830 Finished first check (mem)                                          #
+# 20130902 Added cgroup kernel boot parameter check (cgroup_active)            #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
 # Definition of variables
-version="0.1.1"
+version="0.2.0"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
@@ -35,7 +36,7 @@ STATE_UNKNOWN=3         # define the exit code if status is Unknown
 PATH=/usr/local/bin:/usr/bin:/bin # Set path
 ################################################################################
 # The following commands are required
-for cmd in lxc-ls lxc-cgroup egrep awk; 
+for cmd in lxc-ls lxc-cgroup grep egrep awk; 
 do if ! `which ${cmd} 1>/dev/null`
   then echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
   exit ${STATE_UNKNOWN}
@@ -84,10 +85,17 @@ threshold_sense() {
 	if [[ $warning -gt $critical ]]; then echo "Warning threshold cannot be greater than critical"; exit $STATE_UNKNOWN; fi
 }
 
+cgroup_active() {
+	        [[ -n $(cat /proc/cmdline | grep cgroup_enable) ]] || echo "cgroup is not defined as kernel boot parameter"; exit $STATE_UNKNOWN
+	}
 ################################################################################
 # Checks
 case ${type} in
 mem)	# Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgroups/memory.txt
+	# cgroup must be enable as kernel boot parameter
+	cgroup_active
+
+	# Get the values
 	#used=$(lxc-cgroup -n ${container} memory.usage_in_bytes)
 	rss=$(lxc-cgroup -n ${container} memory.stat | egrep '^rss [[:digit:]]' | awk '{print $2}')
 	cache=$(lxc-cgroup -n ${container} memory.stat | egrep '^cache [[:digit:]]' | awk '{print $2}')
