@@ -24,12 +24,13 @@
 # History:                                                                     #
 # 20130830 Finished first check (mem)                                          #
 # 20130902 Added cgroup kernel boot parameter check (cgroup_active)            #
-# 20130902 Fixed previous cgroup check (see issue #1)                          #
+# 20130902 Fixed previous cgroup check (see issue #1)			       #
+# 20130902 Activated lxc_exists verification                                   #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
 # Definition of variables
-version="0.2.2"
+version="0.2.3"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
@@ -76,20 +77,24 @@ echo -e "${help}"; exit $STATE_UNKNOWN
 fi
 ################################################################################
 # Functions
-#lxc_exists() {
-#lxc-ls | grep -x ${container} 1>/dev/null || echo "LXC ${container} not found on system"; exit $STATE_CRITICAL
-#}
-
+lxc_exists() {
+if [[ ${container} != "ALL" ]]; then
+lxc-ls | grep -x ${container} 1>/dev/null || echo "LXC ${container} not found on system"; exit $STATE_CRITICAL
+fi
+}
 threshold_sense() {
 if [[ -n $warning ]] && [[ -z $critical ]]; then echo "Both warning and critical thresholds must be set"; exit $STATE_UNKNOWN; fi
 if [[ -z $warning ]] && [[ -n $critical ]]; then echo "Both warning and critical thresholds must be set"; exit $STATE_UNKNOWN; fi
 if [[ $warning -gt $critical ]]; then echo "Warning threshold cannot be greater than critical"; exit $STATE_UNKNOWN; fi
 }
 cgroup_memory_active() {
-if [[ $(cat /proc/cgroups | grep memory | awk '{print $4}') -eq 0 ]]; then echo "cgroup memory is not enabled (see /proc/cgroups)"; exit $STATE_UNKNOWN; fi
+if [[ $(cat /proc/cgroups | grep memory | awk '{print $4}') -eq 0 ]]; then echo "cgroup is not defined as kernel boot parameter"; exit $STATE_UNKNOWN; fi
 }
 ################################################################################
-# Checks
+# Simple check if container exists
+lxc_exists
+################################################################################
+# Check Types
 case ${type} in
 mem)	# Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgroups/memory.txt
 	# cgroup memory support must be enabled
@@ -131,4 +136,4 @@ mem)	# Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgroup
 	else echo "LXC ${container} OK - Used Memory: ${used_output}|mem=${used}B;0;0;0;${limit}"; exit $STATE_OK
 	fi
 	;;
-esac
+esa3
