@@ -24,12 +24,12 @@
 # History:                                                                     #
 # 20130830 Finished first check (mem)                                          #
 # 20130902 Added cgroup kernel boot parameter check (cgroup_active)            #
-# 20130902 Fixed previous cgroup check (see issue #1)			       #
+# 20130902 Fixed previous cgroup check (see issue #1)                          #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
 # Definition of variables
-version="0.2.1"
+version="0.2.2"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
@@ -86,7 +86,7 @@ if [[ -z $warning ]] && [[ -n $critical ]]; then echo "Both warning and critical
 if [[ $warning -gt $critical ]]; then echo "Warning threshold cannot be greater than critical"; exit $STATE_UNKNOWN; fi
 }
 cgroup_memory_active() {
-if [[ $(cat /proc/cgroups | grep memory | awk '{print $4}') -eq 0 ]]; then echo "cgroup is not defined as kernel boot parameter"; exit $STATE_UNKNOWN; fi
+if [[ $(cat /proc/cgroups | grep memory | awk '{print $4}') -eq 0 ]]; then echo "cgroup memory is not enabled (see /proc/cgroups)"; exit $STATE_UNKNOWN; fi
 }
 ################################################################################
 # Checks
