@@ -25,12 +25,12 @@
 # 20130830 Finished first check (mem)                                          #
 # 20130902 Added cgroup kernel boot parameter check (cgroup_active)            #
 # 20130902 Fixed previous cgroup check (see issue #1)			       #
-# 20130902 Activated lxc_exists verification                                   #
+# 20130902 Activated lxc_exists verification (finally turned to lxc_running)   #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
 # Definition of variables
-version="0.2.3"
+version="0.2.4"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
@@ -77,9 +77,11 @@ echo -e "${help}"; exit $STATE_UNKNOWN
 fi
 ################################################################################
 # Functions
-lxc_exists() {
+lxc_running() {
 if [[ ${container} != "ALL" ]]; then
-lxc-ls | grep -x ${container} 1>/dev/null || echo "LXC ${container} not found on system"; exit $STATE_CRITICAL
+  if [[ $(lxc-info -n ${container} | grep state | awk '{print $2}') = "STOPPED" ]] 
+  then echo "LXC ${container} not found or not running on system"; exit $STATE_CRITICAL
+  fi
 fi
 }
 threshold_sense() {
@@ -91,8 +93,8 @@ cgroup_memory_active() {
 if [[ $(cat /proc/cgroups | grep memory | awk '{print $4}') -eq 0 ]]; then echo "cgroup is not defined as kernel boot parameter"; exit $STATE_UNKNOWN; fi
 }
 ################################################################################
-# Simple check if container exists
-lxc_exists
+# Simple check if container is running
+lxc_running
 ################################################################################
 # Check Types
 case ${type} in
@@ -136,4 +138,4 @@ mem)	# Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgroup
 	else echo "LXC ${container} OK - Used Memory: ${used_output}|mem=${used}B;0;0;0;${limit}"; exit $STATE_OK
 	fi
 	;;
-esa3
+esac
