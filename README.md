@@ -35,5 +35,5 @@ Examples (container name: lxctest01)
     ./check_lxc.sh -n lxctest01 -t mem -w 85 -c 95 -u k
     LXC lxctest01 OK - Used Memory: 2% (98600 KB)|mem_used=100966400B;0;0;0;4294967296
     
-    ./usr/lib/nagios/plugins/check_lxc.sh -n ALL -t auto 
+    ./check_lxc.sh -n ALL -t auto 
     LXC AUTOSTART CRITICAL: lxctest01
