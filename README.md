@@ -14,12 +14,12 @@ Options and check types explained
         -n name of container (or ALL for some types)
         -t type to check (see list below)
         [-u unit of output values (k|m|g)]
-        [-w warning threshold (percent)]
-        [-c critical threshold (percent)]
+        [-w warning threshold]
+        [-c critical threshold]
         
     Types:
-        mem -> Check the memory usage of the given container
-        swap -> Check the swap usage
+        mem -> Check the memory usage of the given container (thresholds in percent)
+        swap -> Check the swap usage (thresholds in MB)
         auto -> Check autostart of container (-n ALL possible)
 
 
