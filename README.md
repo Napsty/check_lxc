@@ -37,3 +37,7 @@ Examples (container name: lxctest01)
     
     ./check_lxc.sh -n ALL -t auto 
     LXC AUTOSTART CRITICAL: lxctest01
+
+    ./check_lxc.sh -n lxctest01 -t swap
+    LXC app1-ewmon-prod OK - Used Swap: 0 MB|swap=0B;;;0;0
+ 
