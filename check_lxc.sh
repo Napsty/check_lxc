@@ -29,11 +29,12 @@
 # 20130902 Added new check type (auto)                                         #
 # 20130912 Reorganizing code, put output calculation into function             #
 # 20130912 Added new check type (swap)                                         #
+# 20130913 Bugfix in swap check warning calculation                            #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
 # Definition of variables
-version="0.4.0"
+version="0.4.1"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
@@ -161,10 +162,10 @@ swap)   # Swap Check
 	  warningpf=$(( $warning * 1024 * 1024 ))
 	  criticalpf=$(( $critical * 1024 * 1024 ))
           threshold_sense
-          if [[ $used -ge $critical ]]
+          if [[ $used -ge $criticalpf ]]
                 then echo "LXC ${container} CRITICAL - Used Swap: ${used_output}|swap=${used}B;${warningpf};${criticalpf};0;0"
                 exit $STATE_CRITICAL
-          elif [[ $used_perc -ge $warning ]]
+          elif [[ $used -ge $warningpf ]]
                 then echo "LXC ${container} WARNING - Used Swap: ${used_output}|swap=${used}B;${warningpf};${criticalpf};0;0"
                 exit $STATE_WARNING
           else  echo "LXC ${container} OK - Used Swap: ${used_output}|swap=${used}B;${warningpf};${criticalpf};0;0"
