@@ -30,29 +30,50 @@
 # 20130912 Reorganizing code, put output calculation into function             #
 # 20130912 Added new check type (swap)                                         #
 # 20130913 Bugfix in swap check warning calculation                            #
+# 20160316 Make plugin work with LXC 1.x, too                                  #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
 # Definition of variables
-version="0.4.1"
+version="0.5.0"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
 STATE_UNKNOWN=3         # define the exit code if status is Unknown
 PATH=/usr/local/bin:/usr/bin:/bin # Set path
 ################################################################################
-# The following commands are required
-for cmd in lxc-info lxc-ls lxc-list lxc-cgroup grep egrep awk sed; 
+# The following base commands are required
+for cmd in grep egrep awk sed; 
 do if ! `which ${cmd} 1>/dev/null`
   then echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
   exit ${STATE_UNKNOWN}
 fi
 done
 ################################################################################
+# LXC 0.x and 1.x commands are different. The following lxc commands are required.
+lxcversion=$((lxc-version 2>/dev/null || lxc-start --version) | sed 's/.* //' | awk -F. '{print $1}')
+
+if [[ $lxcversion -eq 0 ]]; then
+  for cmd in lxc-info lxc-ls lxc-list lxc-cgroup grep egrep awk sed; 
+  do if ! `which ${cmd} 1>/dev/null`
+    then echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
+    exit ${STATE_UNKNOWN}
+  fi
+  done
+else
+  for cmd in lxc-info lxc-ls lxc-cgroup grep egrep awk sed; 
+  do if ! `which ${cmd} 1>/dev/null`
+    then echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
+    exit ${STATE_UNKNOWN}
+  fi
+  done
+
+fi
+################################################################################
 # Mankind needs help
-help="$0 v ${version} (c) 2013 Claudio Kuenzler
+help="$0 v ${version} (c) 2013-2016 Claudio Kuenzler
 Usage: $0 -n container -t type [-u unit] [-w warning] [-c critical]
-Options:\n\t-n name of container\n\t-t type to check (see list below)\n\t[-u unit of output values (k|m|g)]\n\t[-w warning threshold]\n\t[-c critical threshold]
+Options:\n\t-n name of container\n\t-t type to check (see list below)\n\t[-u unit of output values (k|m|g)]\n\t[-w warning threshold] (makes only sense if limit is set in lxc config)\n\t[-c critical threshold] (makes only sense if limit is set in lxc config)
 Types:\n\tmem -> Check the memory usage of the given container (thresholds in percent)\n\tswap -> Check the swap usage (thresholds in MB)\n\tauto -> Check autostart of container (-n ALL possible)"
 ################################################################################
 # Check for people who need help - aren't we all nice ;-)
@@ -176,11 +197,16 @@ swap)   # Swap Check
 	;;
 auto)   # Autostart check
         if [[ ${container} = "ALL" ]]
+        # All containers
         then 
           i=0
           for lxc in $(lxc-ls -1 | sort -u ); do
-          if [[ $(lxc-info -n ${lxc} -s | awk '{print $2}') = "RUNNING" ]]
-          then [[ -n $(lxc-list | grep ${lxc} | grep "(auto)") ]] || error[${i}]="${lxc} "
+          if [[ $(lxc-info -n ${lxc} -s | awk '{print $2}') = "RUNNING" ]]; then 
+            if [[ $lxcversion -eq 0 ]]; then 
+              [[ -n $(lxc-list | grep ${lxc} | grep "(auto)") ]] || error[${i}]="${lxc} "
+            fi
+            else 
+              [[ -n $(lxc-ls -f | grep ${lxc} | grep "YES") ]] || error[${i}]="${lxc} "
           fi
           done
           if [[ ${#error[*]} -gt 0 ]]
@@ -188,9 +214,17 @@ auto)   # Autostart check
           else echo "LXC AUTOSTART OK"; exit $STATE_OK
           fi
         else 
-          if [[ -z $(lxc-list | grep ${container} | grep "(auto)") ]]
-          then echo "LXC AUTOSTART CRITICAL: ${container}"; exit $STATE_CRITICAL
-          else echo "LXC AUTOSTART OK"; exit $STATE_OK
+        # Single container
+          if [[ $lxcversion -eq 0 ]]; then 
+            if [[ -z $(lxc-list | grep ${container} | grep "(auto)") ]]
+            then echo "LXC AUTOSTART CRITICAL: ${container}"; exit $STATE_CRITICAL
+            else echo "LXC AUTOSTART OK"; exit $STATE_OK
+            fi
+          else
+            if [[ -z $(lxc-ls -f | grep ${container} | grep "YES") ]]
+            then echo "LXC AUTOSTART CRITICAL: ${container}"; exit $STATE_CRITICAL
+            else echo "LXC AUTOSTART OK"; exit $STATE_OK
+            fi
           fi
         fi
         ;;
