@@ -31,6 +31,7 @@
 # 20130912 Added new check type (swap)                                         #
 # 20130913 Bugfix in swap check warning calculation                            #
 # 20160316 Make plugin work with LXC 1.x, too                                  #
+# 20160316 In LXC 1.x, lxc-cgroup command needs sudo                           #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
@@ -60,6 +61,9 @@ if [[ $lxcversion -eq 0 ]]; then
     exit ${STATE_UNKNOWN}
   fi
   done
+else 
+  # In LXC 1.x the lxc-cgroup command requires root privileges
+  cgroupsudo="sudo"
 fi
 ################################################################################
 # Mankind needs help
@@ -132,12 +136,12 @@ mem)    # Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgr
         cgroup_memory_active
 
         # Get the values
-        #used=$(lxc-cgroup -n ${container} memory.usage_in_bytes)
-        rss=$(lxc-cgroup -n ${container} memory.stat | egrep '^rss [[:digit:]]' | awk '{print $2}')
-        cache=$(lxc-cgroup -n ${container} memory.stat | egrep '^cache [[:digit:]]' | awk '{print $2}')
-        swap=$(lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
+        #used=$($cgroupsudo lxc-cgroup -n ${container} memory.usage_in_bytes)
+        rss=$($cgroupsudo lxc-cgroup -n ${container} memory.stat | egrep '^rss [[:digit:]]' | awk '{print $2}')
+        cache=$($cgroupsudo lxc-cgroup -n ${container} memory.stat | egrep '^cache [[:digit:]]' | awk '{print $2}')
+        swap=$($cgroupsudo lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
         used=$(( $rss + $cache + $swap))
-	limit=$(lxc-cgroup -n ${container} memory.limit_in_bytes)
+	limit=$($cgroupsudo lxc-cgroup -n ${container} memory.limit_in_bytes)
         used_perc=$(( $used * 100 / $limit))
 
         # Calculate wanted output - defaults to m
@@ -164,7 +168,7 @@ swap)   # Swap Check
         cgroup_memory_active
 
         # Get the values
-        used=$(lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
+        used=$($cgroupsudo lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
 
         # Calculate wanted output - defaults to m
 	unit_calculate
