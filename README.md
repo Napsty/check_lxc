@@ -41,3 +41,16 @@ Examples (container name: lxctest01)
     ./check_lxc.sh -n lxctest01 -t swap -w 50 -c 70
     LXC lxctest01 CRITICAL - Used Swap: 81 MB|swap=85680128B;52428800;73400320;0;0
  
+
+Additional notes
+------------------------------------
+To be able to run the memory check (-t mem), the cgroup subsys "memory" must be enabled. You can verify this manually by running:
+
+    cat /proc/cgroups | grep memory
+    
+If the first value is not enabled (0), then add the following option as your kernel boot parameter: cgroup_enable=memory. In Debian this can be done by modifying /etc/default/grub2 followed by a update of the grub2:
+
+    # cat /etc/default/grub | grep CMDLINE_LINUX_DEFAULT
+    GRUB_CMDLINE_LINUX_DEFAULT="quiet cgroup_enable=memory"
+    
+    update-grub2
