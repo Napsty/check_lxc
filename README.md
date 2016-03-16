@@ -48,9 +48,14 @@ To be able to run the memory check (-t mem), the cgroup subsys "memory" must be 
 
     cat /proc/cgroups | grep memory
     
-If the first value is not enabled (0), then add the following option as your kernel boot parameter: cgroup_enable=memory. In Debian this can be done by modifying /etc/default/grub2 followed by a update of the grub2:
+If the first value is not enabled (0), then add the following options as your kernel boot parameter: "cgroup_enable=memory" and "swapaccount=1". In Debian this can be done by modifying /etc/default/grub2 followed by a update of the grub2 and reboot:
 
     # cat /etc/default/grub | grep CMDLINE_LINUX_DEFAULT
-    GRUB_CMDLINE_LINUX_DEFAULT="quiet cgroup_enable=memory"
+    GRUB_CMDLINE_LINUX_DEFAULT="quiet cgroup_enable=memory swapaccount=1"
     
     update-grub2
+    reboot
+
+Then verify if you can get the memory statistics of a container:
+
+    lxc-cgroup -n lxctest01 memory.stat
