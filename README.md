@@ -14,8 +14,8 @@ Options and check types explained
         -n name of container (or ALL for some types)
         -t type to check (see list below)
         [-u unit of output values (k|m|g)]
-        [-w warning threshold]
-        [-c critical threshold]
+        [-w warning threshold] (makes only sense if limit is set in lxc config)
+        [-c critical threshold] (makes only sense if limit is set in lxc config)
         
     Types:
         mem -> Check the memory usage of the given container (thresholds in percent)
