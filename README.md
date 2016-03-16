@@ -42,7 +42,7 @@ Examples (container name: lxctest01)
     LXC lxctest01 CRITICAL - Used Swap: 81 MB|swap=85680128B;52428800;73400320;0;0
  
 
-Additional notes
+Enable cgroup memory for memory check
 ------------------------------------
 To be able to run the memory check (-t mem), the cgroup subsys "memory" must be enabled. You can verify this manually by running:
 
@@ -59,3 +59,10 @@ If the first value is not enabled (0), then add the following options as your ke
 Then verify if you can get the memory statistics of a container:
 
     lxc-cgroup -n lxctest01 memory.stat
+
+
+sudoers entry for LXC 1.x
+------------------------------------
+If you run LXC 1.x, the lxc-cgroup command requires root privileges. Therefore you must create a sudoers entry like this example:
+
+    nagios          ALL = NOPASSWD: /usr/bin/lxc-cgroup
