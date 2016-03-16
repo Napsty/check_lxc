@@ -43,7 +43,7 @@ STATE_UNKNOWN=3         # define the exit code if status is Unknown
 PATH=/usr/local/bin:/usr/bin:/bin # Set path
 ################################################################################
 # The following base commands are required
-for cmd in grep egrep awk sed; 
+for cmd in grep egrep awk sed lxc-info lxc-ls lxc-cgroup; 
 do if ! `which ${cmd} 1>/dev/null`
   then echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
   exit ${STATE_UNKNOWN}
@@ -54,20 +54,12 @@ done
 lxcversion=$((lxc-version 2>/dev/null || lxc-start --version) | sed 's/.* //' | awk -F. '{print $1}')
 
 if [[ $lxcversion -eq 0 ]]; then
-  for cmd in lxc-info lxc-ls lxc-list lxc-cgroup grep egrep awk sed; 
+  for cmd in lxc-list; 
   do if ! `which ${cmd} 1>/dev/null`
     then echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
     exit ${STATE_UNKNOWN}
   fi
   done
-else
-  for cmd in lxc-info lxc-ls lxc-cgroup grep egrep awk sed; 
-  do if ! `which ${cmd} 1>/dev/null`
-    then echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
-    exit ${STATE_UNKNOWN}
-  fi
-  done
-
 fi
 ################################################################################
 # Mankind needs help
