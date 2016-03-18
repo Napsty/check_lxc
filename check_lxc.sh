@@ -36,11 +36,12 @@
 # 20160318 Perfdata of mem check: Only show 'max' when thresholds set          #
 # 20160318 Adapt lxc_running function to work on 1.x, too                      #
 # 20160318 Add warn and crit values into mem check perfdata                    #
+# 20160318 Remove sudo commands within plugin, whole plugin requires sudo      #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
 # Definition of variables
-version="0.5.3"
+version="0.5.4"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
@@ -65,9 +66,6 @@ if [[ $lxcversion -eq 0 ]]; then
     exit ${STATE_UNKNOWN}
   fi
   done
-else 
-  # In LXC 1.x the lxc-cgroup command requires root privileges
-  cgroupsudo="sudo"
 fi
 ################################################################################
 # Mankind needs help
@@ -145,14 +143,14 @@ mem)    # Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgr
         cgroup_memory_active
 
         # Get the values
-        #used=$($cgroupsudo lxc-cgroup -n ${container} memory.usage_in_bytes)
-        rss=$($cgroupsudo lxc-cgroup -n ${container} memory.stat | egrep '^rss [[:digit:]]' | awk '{print $2}')
-        cache=$($cgroupsudo lxc-cgroup -n ${container} memory.stat | egrep '^cache [[:digit:]]' | awk '{print $2}')
-        swap=$($cgroupsudo lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
+        #used=$(lxc-cgroup -n ${container} memory.usage_in_bytes)
+        rss=$(lxc-cgroup -n ${container} memory.stat | egrep '^rss [[:digit:]]' | awk '{print $2}')
+        cache=$(lxc-cgroup -n ${container} memory.stat | egrep '^cache [[:digit:]]' | awk '{print $2}')
+        swap=$(lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
         # When kernel is booted without swapaccount=1, swap value doesnt show up. Assuming 0 in this case.
         if [[ -z $swap ]] || [[ $swap = "" ]]; then swap=0; fi
         used=$(( $rss + $cache + $swap))
-	limit=$($cgroupsudo lxc-cgroup -n ${container} memory.limit_in_bytes)
+	limit=$(lxc-cgroup -n ${container} memory.limit_in_bytes)
         used_perc=$(( $used * 100 / $limit))
 
         # Calculate wanted output - defaults to m
@@ -180,7 +178,7 @@ swap)   # Swap Check
         cgroup_memory_active
 
         # Get the values
-        used=$($cgroupsudo lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
+        used=$(lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
 
         # When kernel is booted without swapaccount=1, swap value doesnt show up. This check doesnt make sense then.
         if [[ -z $swap ]] || [[ $swap = "" ]]; then 
