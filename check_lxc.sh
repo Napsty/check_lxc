@@ -33,6 +33,7 @@
 # 20160316 Make plugin work with LXC 1.x, too                                  #
 # 20160316 In LXC 1.x, lxc-cgroup command needs sudo                           #
 # 20160318 Additional checks if swap value can be read                         #
+# 20160318 Perfdata of mem check: Only show 'max' when thresholds set          #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
@@ -163,7 +164,7 @@ mem)    # Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgr
           else  echo "LXC ${container} OK - Used Memory: ${used_perc}% (${used_output})|mem=${used}B;0;0;0;${limit}"
                 exit $STATE_OK
           fi
-        else echo "LXC ${container} OK - Used Memory: ${used_output}|mem=${used}B;0;0;0;${limit}"; exit $STATE_OK
+        else echo "LXC ${container} OK - Used Memory: ${used_output}|mem=${used}B;0;0;0;0"; exit $STATE_OK
         fi
         ;;
 swap)   # Swap Check
