@@ -6,7 +6,7 @@ Monitoring plugin to check LXC (Linux Container)
 
 Usage
 -----
-    ./check_lxc.sh -n container -t type [-u unit] [-w warning] [-c critical]
+    sudo ./check_lxc.sh -n container -t type [-u unit] [-w warning] [-c critical]
     
 sudo needed
 -----------
