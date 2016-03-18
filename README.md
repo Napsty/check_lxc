@@ -66,3 +66,5 @@ sudoers entry for LXC 1.x
 If you run LXC 1.x, the lxc-cgroup command requires root privileges. Therefore you must create a sudoers entry like this example:
 
     nagios          ALL = NOPASSWD: /usr/bin/lxc-cgroup
+
+Or as an alternative, run the complete check_lxc.sh plugin with sudo.
