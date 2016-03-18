@@ -32,11 +32,12 @@
 # 20130913 Bugfix in swap check warning calculation                            #
 # 20160316 Make plugin work with LXC 1.x, too                                  #
 # 20160316 In LXC 1.x, lxc-cgroup command needs sudo                           #
+# 20160318 Additional checks if swap value can be read                         #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
 # Definition of variables
-version="0.5.0"
+version="0.5.1"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
@@ -111,7 +112,7 @@ if [[ -z $warning ]] && [[ -n $critical ]]; then echo "Both warning and critical
 if [[ $warning -gt $critical ]]; then echo "Warning threshold cannot be greater than critical"; exit $STATE_UNKNOWN; fi
 }
 cgroup_memory_active() {
-if [[ $(cat /proc/cgroups | grep memory | awk '{print $4}') -eq 0 ]]; then echo "cgroup is not defined as kernel boot parameter"; exit $STATE_UNKNOWN; fi
+if [[ $(cat /proc/cgroups | grep memory | awk '{print $4}') -eq 0 ]]; then echo "cgroup is not defined as kernel cmdline parameter (cgroup_enable=memory)"; exit $STATE_UNKNOWN; fi
 }
 unit_calculate() {
 # Calculate wanted output - defaults to m
@@ -140,6 +141,8 @@ mem)    # Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgr
         rss=$($cgroupsudo lxc-cgroup -n ${container} memory.stat | egrep '^rss [[:digit:]]' | awk '{print $2}')
         cache=$($cgroupsudo lxc-cgroup -n ${container} memory.stat | egrep '^cache [[:digit:]]' | awk '{print $2}')
         swap=$($cgroupsudo lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
+        # When kernel is booted without swapaccount=1, swap value doesnt show up. Assuming 0 in this case.
+        if [[ -n $swap ]] || [[ $swap = "" ]]; then swap=0; fi
         used=$(( $rss + $cache + $swap))
 	limit=$($cgroupsudo lxc-cgroup -n ${container} memory.limit_in_bytes)
         used_perc=$(( $used * 100 / $limit))
@@ -169,6 +172,12 @@ swap)   # Swap Check
 
         # Get the values
         used=$($cgroupsudo lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
+
+        # When kernel is booted without swapaccount=1, swap value doesnt show up. This check doesnt make sense then.
+        if [[ -n $swap ]] || [[ $swap = "" ]]; then 
+          echo "Swap value for ${container} cannot be read. Make sure you activate swapaccount=1 in kernel cmdline"
+          exit $STATE_UNKNOWN
+        fi
 
         # Calculate wanted output - defaults to m
 	unit_calculate
