@@ -34,11 +34,12 @@
 # 20160316 In LXC 1.x, lxc-cgroup command needs sudo                           #
 # 20160318 Additional checks if swap value can be read                         #
 # 20160318 Perfdata of mem check: Only show 'max' when thresholds set          #
+# 20160318 Adapt lxc_running function to work on 1.x, too                      #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
 # Definition of variables
-version="0.5.1"
+version="0.5.2"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
@@ -102,8 +103,13 @@ fi
 # Functions
 lxc_running() {
 if [[ ${container} != "ALL" ]]; then
-  if [[ $(lxc-info -n ${container} | grep state | awk '{print $2}') = "STOPPED" ]] 
-  then echo "LXC ${container} not found or not running on system"; exit $STATE_CRITICAL
+  lxc-info -n ${container} >/dev/null 2>&1
+  if [[ $? -gt 0 ]]
+  then echo "LXC ${container} not found on system"; exit $STATE_CRITICAL
+  else 
+    if [[ $(lxc-info -n ${container} | grep -i state | awk '{print $2}') = "STOPPED" ]]
+    then echo "LXC ${container} not found or not running on system"; exit $STATE_CRITICAL
+    fi
   fi
 fi
 }
