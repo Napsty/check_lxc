@@ -35,11 +35,12 @@
 # 20160318 Additional checks if swap value can be read                         #
 # 20160318 Perfdata of mem check: Only show 'max' when thresholds set          #
 # 20160318 Adapt lxc_running function to work on 1.x, too                      #
+# 20160318 Add warn and crit values into mem check perfdata                    #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
 # Definition of variables
-version="0.5.2"
+version="0.5.3"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
@@ -161,13 +162,14 @@ mem)    # Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgr
         if [[ -n $warning ]] && [[ -n $critical ]]
         then
           threshold_sense
+          warnvalue=$(( $limit / 100 * $warning )); critvalue=$(( $limit / 100 * $critical ))
           if [[ $used_perc -ge $critical ]]
-                then echo "LXC ${container} CRITICAL - Used Memory: ${used_perc}% (${used_output})|mem=${used}B;0;0;0;${limit}"
+                then echo "LXC ${container} CRITICAL - Used Memory: ${used_perc}% (${used_output})|mem=${used}B;${warnvalue};${critvalue};0;${limit}"
                 exit $STATE_CRITICAL
           elif [[ $used_perc -ge $warning ]]
-                then echo "LXC ${container} WARNING - Used Memory: ${used_perc}% (${used_output})|mem=${used}B;0;0;0;${limit}"
+                then echo "LXC ${container} WARNING - Used Memory: ${used_perc}% (${used_output})|mem=${used}B;${warnvalue};${critvalue};0;${limit}"
                 exit $STATE_WARNING
-          else  echo "LXC ${container} OK - Used Memory: ${used_perc}% (${used_output})|mem=${used}B;0;0;0;${limit}"
+          else  echo "LXC ${container} OK - Used Memory: ${used_perc}% (${used_output})|mem=${used}B;${warnvalue};${critcalue};0;${limit}"
                 exit $STATE_OK
           fi
         else echo "LXC ${container} OK - Used Memory: ${used_output}|mem=${used}B;0;0;0;0"; exit $STATE_OK
