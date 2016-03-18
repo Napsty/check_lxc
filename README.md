@@ -8,6 +8,16 @@ Usage
 -----
     ./check_lxc.sh -n container -t type [-u unit] [-w warning] [-c critical]
     
+sudo needed
+-----------
+check_lxc.sh requires to be run with root privileges because certain commands within the plugin require elevated permissions. Therefore create an entry in /etc/sudoers similar to this (adapt to your own environment):
+
+    nagios          ALL = NOPASSWD: /usr/lib/nagios/plugins/check_lxc.sh
+    
+If you use NRPE, the corresponding command definition could look like this:
+
+    command[check_lxc]=sudo /usr/lib/nagios/plugins/check_lxc.sh -n $ARG1$ -t $ARG2$
+    
 Options and check types explained
 ---------------------------------
     Options:
@@ -21,7 +31,6 @@ Options and check types explained
         mem -> Check the memory usage of the given container (thresholds in percent)
         swap -> Check the swap usage (thresholds in MB)
         auto -> Check autostart of container (-n ALL possible)
-
 
 
 Examples (container name: lxctest01)
@@ -59,12 +68,3 @@ If the first value is not enabled (0), then add the following options as your ke
 Then verify if you can get the memory statistics of a container:
 
     lxc-cgroup -n lxctest01 memory.stat
-
-
-sudoers entry for LXC 1.x
-------------------------------------
-If you run LXC 1.x, the lxc-cgroup command requires root privileges. Therefore you must create a sudoers entry like this example:
-
-    nagios          ALL = NOPASSWD: /usr/bin/lxc-cgroup
-
-Or as an alternative, run the complete check_lxc.sh plugin with sudo.
