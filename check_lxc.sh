@@ -142,7 +142,7 @@ mem)    # Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgr
         cache=$($cgroupsudo lxc-cgroup -n ${container} memory.stat | egrep '^cache [[:digit:]]' | awk '{print $2}')
         swap=$($cgroupsudo lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
         # When kernel is booted without swapaccount=1, swap value doesnt show up. Assuming 0 in this case.
-        if [[ -n $swap ]] || [[ $swap = "" ]]; then swap=0; fi
+        if [[ -z $swap ]] || [[ $swap = "" ]]; then swap=0; fi
         used=$(( $rss + $cache + $swap))
 	limit=$($cgroupsudo lxc-cgroup -n ${container} memory.limit_in_bytes)
         used_perc=$(( $used * 100 / $limit))
@@ -174,7 +174,7 @@ swap)   # Swap Check
         used=$($cgroupsudo lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
 
         # When kernel is booted without swapaccount=1, swap value doesnt show up. This check doesnt make sense then.
-        if [[ -n $swap ]] || [[ $swap = "" ]]; then 
+        if [[ -z $swap ]] || [[ $swap = "" ]]; then 
           echo "Swap value for ${container} cannot be read. Make sure you activate swapaccount=1 in kernel cmdline"
           exit $STATE_UNKNOWN
         fi
