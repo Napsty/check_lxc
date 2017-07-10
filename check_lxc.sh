@@ -37,15 +37,17 @@
 # 20160318 Adapt lxc_running function to work on 1.x, too                      #
 # 20160318 Add warn and crit values into mem check perfdata                    #
 # 20160318 Remove sudo commands within plugin, whole plugin requires sudo      #
+# 20170710 Added cpu check type                                                #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
 # Definition of variables
-version="0.5.4"
+version="0.6.0"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
 STATE_UNKNOWN=3         # define the exit code if status is Unknown
+sleep=5                 # define the sleep time between cpu checks
 PATH=/usr/local/bin:/usr/bin:/bin # Set path
 ################################################################################
 # The following base commands are required
@@ -69,10 +71,10 @@ if [[ $lxcversion -eq 0 ]]; then
 fi
 ################################################################################
 # Mankind needs help
-help="$0 v ${version} (c) 2013-2016 Claudio Kuenzler
+help="$0 v ${version} (c) 2013-$(date +%Y) Claudio Kuenzler
 Usage: $0 -n container -t type [-u unit] [-w warning] [-c critical]
-Options:\n\t-n name of container\n\t-t type to check (see list below)\n\t[-u unit of output values (k|m|g)]\n\t[-w warning threshold] (makes only sense if limit is set in lxc config)\n\t[-c critical threshold] (makes only sense if limit is set in lxc config)
-Types:\n\tmem -> Check the memory usage of the given container (thresholds in percent)\n\tswap -> Check the swap usage (thresholds in MB)\n\tauto -> Check autostart of container (-n ALL possible)"
+Options:\n\t-n name of container\n\t-t type to check (see list below)\n\t[-u unit of output values (k|m|g)]\n\t[-w warning threshold] (for memory makes only sense if limit is set in lxc config)\n\t[-c critical threshold] (for memory makes only sense if limit is set in lxc config)
+Types:\n\tmem -> Check the memory usage of the given container (thresholds in percent)\n\tswap -> Check the swap usage (thresholds in MB)\n\tcpu -> Check cpu usage (percentage) of a container (thresholds in percent)\n\tauto -> Check autostart of container (-n ALL possible)"
 ################################################################################
 # Check for people who need help - aren't we all nice ;-)
 if [ "${1}" = "--help" -o "${#}" = "0" ];
@@ -82,7 +84,7 @@ if [ "${1}" = "--help" -o "${#}" = "0" ];
 fi
 ################################################################################
 # Get user-given variables
-while getopts "n:t:u:w:c:" Input;
+while getopts "n:t:u:w:c:s:" Input;
 do
        case ${Input} in
        n)      container=${OPTARG};;
@@ -90,6 +92,7 @@ do
        u)      unit=${OPTARG};;
        w)      warning=${OPTARG};;
        c)      critical=${OPTARG};;
+       s)      sleep=${OPTARG};;
        *)      echo -e "${help}"; exit $STATE_UNKNOWN;;
        esac
 done
@@ -240,4 +243,36 @@ auto)   # Autostart check
           fi
         fi
         ;;
+cpu)    # CPU check
+        # Get CPU jiffies statistics globally (using /proc/stat) and from container using cgroups
+        # see https://www.kernel.org/doc/Documentation/filesystems/proc.txt (1.8 Miscellaneous kernel statistics in /proc/stat)
+        # see https://www.kernel.org/doc/Documentation/cgroup-v1/cpuacct.txt
+        proc1=$(cat /proc/stat | grep "^cpu ")
+        cgroup1=$(lxc-cgroup -n ${container} cpuacct.stat)
+        proccpu1=$(( $(echo $proc1 | awk -F' ' '{print $2}') + $(echo $proc1 | awk -F' ' '{print $4}') ))
+        cgroupcpu1=$(( $(echo $cgroup1 | grep user | awk '{print $2}') + $(echo $cgroup1 | grep system | awk '{print $2}') ))
+        sleep $sleep
+        proc2=$(cat /proc/stat | grep "^cpu ")
+        cgroup2=$(lxc-cgroup -n ${container} cpuacct.stat)
+        proccpu2=$(( $(echo $proc2 | awk -F' ' '{print $2}') + $(echo $proc2 | awk -F' ' '{print $4}') ))
+        cgroupcpu2=$(( $(echo $cgroup2 | grep user | awk '{print $2}') + $(echo $cgroup2 | grep system | awk '{print $2}') ))
+        globaljiffies=$(( $proccpu2 - $proccpu1 ))
+        lxcjiffies=$(( $cgroupcpu2 - $cgroupcpu1 ))
+        lxcpercent=$(( $lxcjiffies * 100 / $globaljiffies))
+
+         # Threshold checks
+        if [[ -n $warning ]] && [[ -n $critical ]]
+        then
+          if [[ $lxcpercent -ge $critical ]]
+                then echo "LXC ${container} CRITICAL - CPU Usage: ${lxcpercent}%|cpu=${lxcpercent}%;${warning};${critical};0;0"
+                exit $STATE_CRITICAL
+          elif [[ $lxcpercent -ge $warning ]]
+                then echo "LXC ${container} WARNING - CPU Usage: ${lxcpercent}%|cpu=${lxcpercent}%;${warning};${critical};0;0"
+                exit $STATE_WARNING
+          else  echo "LXC ${container} OK - CPU Usage: ${lxcpercent}%|cpu=${lxcpercent}%;${warning};${critical};0;0"
+                exit $STATE_OK
+          fi
+        else echo "LXC ${container} OK - CPU Usage: ${lxcpercent}%|cpu=${lxcpercent}%;${warning};${critical};0;0"; exit $STATE_OK
+        fi
+	;;
 esac
