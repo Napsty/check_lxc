@@ -26,10 +26,12 @@ Options and check types explained
         [-u unit of output values (k|m|g)]
         [-w warning threshold] (makes only sense if limit is set in lxc config)
         [-c critical threshold] (makes only sense if limit is set in lxc config)
+	[-s sleep in seconds between cpu checks]
         
     Types:
         mem -> Check the memory usage of the given container (thresholds in percent)
         swap -> Check the swap usage (thresholds in MB)
+        cpu -> Check cpu usage (percentage) of a container (thresholds in percent)
         auto -> Check autostart of container (-n ALL possible)
 
 
@@ -49,6 +51,9 @@ Examples (container name: lxctest01)
 
     ./check_lxc.sh -n lxctest01 -t swap -w 50 -c 70
     LXC lxctest01 CRITICAL - Used Swap: 81 MB|swap=85680128B;52428800;73400320;0;0
+ 
+    ./check_lxc.sh -n lxctest01 -t cpu -w 80 -c 90
+    LXC lxctest01 OK - CPU Usage: 27%|cpu=27%;80;90;0;0
  
 
 Enable cgroup memory for memory check
