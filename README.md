@@ -26,7 +26,7 @@ Options and check types explained
         [-u unit of output values (k|m|g)]
         [-w warning threshold] (makes only sense if limit is set in lxc config)
         [-c critical threshold] (makes only sense if limit is set in lxc config)
-	[-s sleep in seconds between cpu checks]
+        [-s sleep in seconds between cpu checks]
         
     Types:
         mem -> Check the memory usage of the given container (thresholds in percent)
