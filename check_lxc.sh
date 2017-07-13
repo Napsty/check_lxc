@@ -3,7 +3,7 @@
 # Script:       check_lxc.sh                                                   #
 # Author:       Claudio Kuenzler (www.claudiokuenzler.com)                     #
 # Purpose:      Monitor LXC                                                    #
-# Full Doc:     www.claudiokuenzler.com/nagios-plugins/check_lxc.php           #
+# Full Doc:     www.claudiokuenzler.com/monitoring-plugins/check_lxc.php       #
 #                                                                              #
 # Licence:      GNU General Public Licence (GPL) http://www.gnu.org/           #
 # This program is free software; you can redistribute it and/or                #
