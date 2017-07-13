@@ -3,6 +3,8 @@ check_lxc
 
 Monitoring plugin to check LXC (Linux Container) 
 
+Full documentation: https://www.claudiokuenzler.com/monitoring-plugins/check_lxc.php
+
 
 Usage
 -----
