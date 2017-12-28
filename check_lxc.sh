@@ -121,7 +121,7 @@ if [[ -z $warning ]] && [[ -n $critical ]]; then echo "Both warning and critical
 if [[ $warning -gt $critical ]]; then echo "Warning threshold cannot be greater than critical"; exit $STATE_UNKNOWN; fi
 }
 cgroup_memory_active() {
-if [[ $(cat /proc/cgroups | grep memory | awk '{print $4}') -eq 0 ]]; then echo "cgroup is not defined as kernel cmdline parameter (cgroup_enable=memory)"; exit $STATE_UNKNOWN; fi
+if [[ $(awk '/memory/ {print $4}' /proc/cgroups) -eq 0 ]]; then echo "cgroup is not defined as kernel cmdline parameter (cgroup_enable=memory)"; exit $STATE_UNKNOWN; fi
 }
 unit_calculate() {
 # Calculate wanted output - defaults to m
