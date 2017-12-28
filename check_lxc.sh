@@ -157,7 +157,7 @@ mem)    # Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgr
         used_perc=$(( used * 100 / limit))
 
         # Calculate wanted output - defaults to m
-	unit_calculate
+        unit_calculate
 
         # Threshold checks
         if [[ -n $warning ]] && [[ -n $critical ]]
@@ -190,7 +190,7 @@ swap)   # Swap Check
         fi
 
         # Calculate wanted output - defaults to m
-	unit_calculate
+        unit_calculate
 
         # Threshold checks
         if [[ -n $warning ]] && [[ -n $critical ]]
@@ -274,5 +274,5 @@ cpu)    # CPU check
           fi
         else echo "LXC ${container} OK - CPU Usage: ${lxcpercent}%|cpu=${lxcpercent}%;${warning};${critical};0;0"; exit $STATE_OK
         fi
-	;;
+    ;;
 esac
