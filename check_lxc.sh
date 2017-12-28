@@ -216,16 +216,17 @@ auto)   # Autostart check
         then 
           i=0
           for lxc in $(lxc-ls -1 | sort -u ); do
-          if [[ $(lxc-info -n ${lxc} -s | awk '{print $2}') = "RUNNING" ]]; then 
-            if [[ $lxcversion -eq 0 ]]; then 
-              [[ -n $(lxc-list | grep ${lxc} | grep "(auto)") ]] || error[${i}]="${lxc} "
+            if [[ $(lxc-info -n ${lxc} -s | awk '{print $2}') = "RUNNING" ]]; then
+              if [[ $lxcversion -eq 0 ]]; then
+                [[ -n $(lxc-list | grep ${lxc} | grep "(auto)") ]] || error[${i}]="${lxc} "
+              else
+                lxc-ls -f | awk '/'"${lxc}"/' {print $3}' | grep -qE 'YES|1' || error[${i}]="${lxc} "
+              fi
             fi
-            else 
-              [[ -n $(lxc-ls -f | grep ${lxc} | grep "YES") ]] || error[${i}]="${lxc} "
-          fi
+            ((i++))
           done
           if [[ ${#error[*]} -gt 0 ]]
-          then echo "LXC AUTOSTART CRITICAL: ${error[*]}"; exit $STATE_CRITICAL
+            then echo "LXC AUTOSTART CRITICAL: ${error[*]}"; exit $STATE_CRITICAL
           else echo "LXC AUTOSTART OK"; exit $STATE_OK
           fi
         else 
@@ -236,9 +237,9 @@ auto)   # Autostart check
             else echo "LXC AUTOSTART OK"; exit $STATE_OK
             fi
           else
-            if [[ -z $(lxc-ls -f | grep ${container} | grep "YES") ]]
-            then echo "LXC AUTOSTART CRITICAL: ${container}"; exit $STATE_CRITICAL
-            else echo "LXC AUTOSTART OK"; exit $STATE_OK
+            if lxc-ls -f | awk '/'"${container}"/' {print $3}' | grep -qE 'YES|1'
+            then echo "LXC AUTOSTART OK"; exit $STATE_OK
+            else echo "LXC AUTOSTART CRITICAL: ${container}"; exit $STATE_CRITICAL
             fi
           fi
         fi
