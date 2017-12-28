@@ -109,7 +109,7 @@ if [[ ${container} != "ALL" ]]; then
   if ! lxc-info -n "${container}" >/dev/null 2>&1
   then echo "LXC ${container} not found on system"; exit $STATE_CRITICAL
   else
-    if [[ $(lxc-info -n ${container} | grep -i state | awk '{print $2}') = "STOPPED" ]]
+    if [[ $(lxc-info -n "${container}" | grep -i state | awk '{print $2}') = "STOPPED" ]]
     then echo "LXC ${container} not found or not running on system"; exit $STATE_CRITICAL
     fi
   fi
@@ -147,9 +147,9 @@ mem)    # Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgr
 
         # Get the values
         #used=$(lxc-cgroup -n ${container} memory.usage_in_bytes)
-        rss=$(lxc-cgroup -n ${container} memory.stat | egrep '^rss [[:digit:]]' | awk '{print $2}')
-        cache=$(lxc-cgroup -n ${container} memory.stat | egrep '^cache [[:digit:]]' | awk '{print $2}')
-        swap=$(lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
+        rss=$(lxc-cgroup -n "${container}" memory.stat | grep -E '^rss [[:digit:]]' | awk '{print $2}')
+        cache=$(lxc-cgroup -n "${container}" memory.stat | grep -E '^cache [[:digit:]]' | awk '{print $2}')
+        swap=$(lxc-cgroup -n "${container}" memory.stat | grep -E '^swap [[:digit:]]' | awk '{print $2}')
         # When kernel is booted without swapaccount=1, swap value doesnt show up. Assuming 0 in this case.
         if [[ -z $swap ]] || [[ $swap = "" ]]; then swap=0; fi
         used=$(( $rss + $cache + $swap))
@@ -209,19 +209,19 @@ swap)   # Swap Check
           fi
         else echo "LXC ${container} OK - Used Swap: ${used_output}|swap=${used}B;${warningpf};${criticalpf};0;0"; exit $STATE_OK
         fi
-	;;
+    ;;
 auto)   # Autostart check
         if [[ ${container} = "ALL" ]]
         # All containers
         then
           i=0
           for lxc in $(lxc-ls -1 | sort -u ); do
-          if [[ $(lxc-info -n ${lxc} -s | awk '{print $2}') = "RUNNING" ]]; then
+          if [[ $(lxc-info -n "${lxc}" -s | awk '{print $2}') = "RUNNING" ]]; then
             if [[ $lxcversion -eq 0 ]]; then
-              [[ -n $(lxc-list | grep ${lxc} | grep "(auto)") ]] || error[${i}]="${lxc} "
+              [[ -n $(lxc-list | grep "${lxc}" | grep "(auto)") ]] || error[${i}]="${lxc} "
             fi
             else
-              [[ -n $(lxc-ls -f | grep ${lxc} | grep "YES") ]] || error[${i}]="${lxc} "
+              [[ -n $(lxc-ls -f | grep "${lxc}" | grep "YES") ]] || error[${i}]="${lxc} "
           fi
           done
           if [[ ${#error[*]} -gt 0 ]]
@@ -247,18 +247,18 @@ cpu)    # CPU check
         # Get CPU jiffies statistics globally (using /proc/stat) and from container using cgroups
         # see https://www.kernel.org/doc/Documentation/filesystems/proc.txt (1.8 Miscellaneous kernel statistics in /proc/stat)
         # see https://www.kernel.org/doc/Documentation/cgroup-v1/cpuacct.txt
-        proc1=$(cat /proc/stat | grep "^cpu ")
-        cgroup1=$(lxc-cgroup -n ${container} cpuacct.stat)
-        proccpu1=$(( $(echo $proc1 | awk -F' ' '{print $2}') + $(echo $proc1 | awk -F' ' '{print $4}') ))
-        cgroupcpu1=$(( $(echo $cgroup1 | grep user | awk '{print $2}') + $(echo $cgroup1 | grep system | awk '{print $2}') ))
-        sleep $sleep
-        proc2=$(cat /proc/stat | grep "^cpu ")
-        cgroup2=$(lxc-cgroup -n ${container} cpuacct.stat)
-        proccpu2=$(( $(echo $proc2 | awk -F' ' '{print $2}') + $(echo $proc2 | awk -F' ' '{print $4}') ))
-        cgroupcpu2=$(( $(echo $cgroup2 | grep user | awk '{print $2}') + $(echo $cgroup2 | grep system | awk '{print $2}') ))
-        globaljiffies=$(( $proccpu2 - $proccpu1 ))
-        lxcjiffies=$(( $cgroupcpu2 - $cgroupcpu1 ))
-        lxcpercent=$(( $lxcjiffies * 100 / $globaljiffies))
+        proc1=$(grep "^cpu " /proc/stat)
+        cgroup1=$(lxc-cgroup -n "${container}" cpuacct.stat)
+        proccpu1=$(( $(echo "$proc1" | awk -F' ' '{print $2}') + $(echo "$proc1" | awk -F' ' '{print $4}') ))
+        cgroupcpu1=$(( $(echo "$cgroup1" | grep user | awk '{print $2}') + $(echo "$cgroup1" | grep system | awk '{print $2}') ))
+        sleep "$sleep"
+        proc2=$(grep "^cpu " /proc/stat)
+        cgroup2=$(lxc-cgroup -n "${container}" cpuacct.stat)
+        proccpu2=$(( $(echo "$proc2" | awk -F' ' '{print $2}') + $(echo "$proc2" | awk -F' ' '{print $4}') ))
+        cgroupcpu2=$(( $(echo "$cgroup2" | grep user | awk '{print $2}') + $(echo "$cgroup2" | grep system | awk '{print $2}') ))
+        globaljiffies=$(( proccpu2 - proccpu1 ))
+        lxcjiffies=$(( cgroupcpu2 - cgroupcpu1 ))
+        lxcpercent=$(( lxcjiffies * 100 / globaljiffies))
 
          # Threshold checks
         if [[ -n $warning ]] && [[ -n $critical ]]
