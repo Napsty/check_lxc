@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 ################################################################################
 # Script:       check_lxc.sh                                                   #
 # Author:       Claudio Kuenzler (www.claudiokuenzler.com)                     #
@@ -39,7 +39,7 @@
 # 20160318 Remove sudo commands within plugin, whole plugin requires sudo      #
 # 20170710 Added cpu check type                                                #
 ################################################################################
-# Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
+# Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical]
 ################################################################################
 # Definition of variables
 version="0.6.0"
@@ -51,7 +51,7 @@ sleep=5                 # define the sleep time between cpu checks
 PATH=/usr/local/bin:/usr/bin:/bin # Set path
 ################################################################################
 # The following base commands are required
-for cmd in grep egrep awk sed lxc-info lxc-ls lxc-cgroup; 
+for cmd in grep egrep awk sed lxc-info lxc-ls lxc-cgroup;
 do if ! `which ${cmd} 1>/dev/null`
   then echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
   exit ${STATE_UNKNOWN}
@@ -62,7 +62,7 @@ done
 lxcversion=$((lxc-version 2>/dev/null || lxc-start --version) | sed 's/.* //' | awk -F. '{print $1}')
 
 if [[ $lxcversion -eq 0 ]]; then
-  for cmd in lxc-list; 
+  for cmd in lxc-list;
   do if ! `which ${cmd} 1>/dev/null`
     then echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
     exit ${STATE_UNKNOWN}
@@ -98,7 +98,7 @@ do
 done
 ################################################################################
 # Check that all required options were given
-if [[ -z ${container} ]] || [[ -z ${type} ]]; then 
+if [[ -z ${container} ]] || [[ -z ${type} ]]; then
 echo -e "${help}"; exit $STATE_UNKNOWN
 fi
 ################################################################################
@@ -108,7 +108,7 @@ if [[ ${container} != "ALL" ]]; then
   lxc-info -n ${container} >/dev/null 2>&1
   if [[ $? -gt 0 ]]
   then echo "LXC ${container} not found on system"; exit $STATE_CRITICAL
-  else 
+  else
     if [[ $(lxc-info -n ${container} | grep -i state | awk '{print $2}') = "STOPPED" ]]
     then echo "LXC ${container} not found or not running on system"; exit $STATE_CRITICAL
     fi
@@ -125,14 +125,14 @@ if [[ $(cat /proc/cgroups | grep memory | awk '{print $4}') -eq 0 ]]; then echo 
 }
 unit_calculate() {
 # Calculate wanted output - defaults to m
-if [[ -n ${unit} ]]; then 
+if [[ -n ${unit} ]]; then
   case ${unit} in
   k)    used_output="$(( $used / 1024)) KB" ;;
   m)    used_output="$(( $used / 1024 / 1024)) MB" ;;
   g)    used_output="$(( $used / 1024 / 1024 / 1024)) GB" ;;
   *)    echo -e "${help}"; exit $STATE_UNKNOWN;;
   esac
-else used_output="$(( $used / 1024 / 1024)) MB" 
+else used_output="$(( $used / 1024 / 1024)) MB"
 fi
 }
 ################################################################################
@@ -184,7 +184,7 @@ swap)   # Swap Check
         used=$(lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
 
         # When kernel is booted without swapaccount=1, swap value doesnt show up. This check doesnt make sense then.
-        if [[ -z $swap ]] || [[ $swap = "" ]]; then 
+        if [[ -z $used ]] || [[ $used = "" ]]; then
           echo "Swap value for ${container} cannot be read. Make sure you activate swapaccount=1 in kernel cmdline"
           exit $STATE_UNKNOWN
         fi
@@ -213,14 +213,14 @@ swap)   # Swap Check
 auto)   # Autostart check
         if [[ ${container} = "ALL" ]]
         # All containers
-        then 
+        then
           i=0
           for lxc in $(lxc-ls -1 | sort -u ); do
-          if [[ $(lxc-info -n ${lxc} -s | awk '{print $2}') = "RUNNING" ]]; then 
-            if [[ $lxcversion -eq 0 ]]; then 
+          if [[ $(lxc-info -n ${lxc} -s | awk '{print $2}') = "RUNNING" ]]; then
+            if [[ $lxcversion -eq 0 ]]; then
               [[ -n $(lxc-list | grep ${lxc} | grep "(auto)") ]] || error[${i}]="${lxc} "
             fi
-            else 
+            else
               [[ -n $(lxc-ls -f | grep ${lxc} | grep "YES") ]] || error[${i}]="${lxc} "
           fi
           done
@@ -228,9 +228,9 @@ auto)   # Autostart check
           then echo "LXC AUTOSTART CRITICAL: ${error[*]}"; exit $STATE_CRITICAL
           else echo "LXC AUTOSTART OK"; exit $STATE_OK
           fi
-        else 
+        else
         # Single container
-          if [[ $lxcversion -eq 0 ]]; then 
+          if [[ $lxcversion -eq 0 ]]; then
             if [[ -z $(lxc-list | grep ${container} | grep "(auto)") ]]
             then echo "LXC AUTOSTART CRITICAL: ${container}"; exit $STATE_CRITICAL
             else echo "LXC AUTOSTART OK"; exit $STATE_OK
