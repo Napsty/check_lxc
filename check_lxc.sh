@@ -127,12 +127,12 @@ unit_calculate() {
 # Calculate wanted output - defaults to m
 if [[ -n ${unit} ]]; then
   case ${unit} in
-  k)    used_output="$(( $used / 1024)) KB" ;;
-  m)    used_output="$(( $used / 1024 / 1024)) MB" ;;
-  g)    used_output="$(( $used / 1024 / 1024 / 1024)) GB" ;;
+  k)    used_output="$(( used / 1024)) KB" ;;
+  m)    used_output="$(( used / 1024 / 1024)) MB" ;;
+  g)    used_output="$(( used / 1024 / 1024 / 1024)) GB" ;;
   *)    echo -e "${help}"; exit $STATE_UNKNOWN;;
   esac
-else used_output="$(( $used / 1024 / 1024)) MB"
+else used_output="$(( used / 1024 / 1024)) MB"
 fi
 }
 ################################################################################
@@ -152,9 +152,9 @@ mem)    # Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgr
         swap=$(lxc-cgroup -n "${container}" memory.stat | grep -E '^swap [[:digit:]]' | awk '{print $2}')
         # When kernel is booted without swapaccount=1, swap value doesnt show up. Assuming 0 in this case.
         if [[ -z $swap ]] || [[ $swap = "" ]]; then swap=0; fi
-        used=$(( $rss + $cache + $swap))
-	limit=$(lxc-cgroup -n ${container} memory.limit_in_bytes)
-        used_perc=$(( $used * 100 / $limit))
+        used=$(( rss + cache + swap))
+        limit=$(lxc-cgroup -n "${container}" memory.limit_in_bytes)
+        used_perc=$(( used * 100 / limit))
 
         # Calculate wanted output - defaults to m
 	unit_calculate
@@ -195,8 +195,8 @@ swap)   # Swap Check
         # Threshold checks
         if [[ -n $warning ]] && [[ -n $critical ]]
         then
-	  warningpf=$(( $warning * 1024 * 1024 ))
-	  criticalpf=$(( $critical * 1024 * 1024 ))
+          warningpf=$(( warning * 1024 * 1024 ))
+          criticalpf=$(( critical * 1024 * 1024 ))
           threshold_sense
           if [[ $used -ge $criticalpf ]]
                 then echo "LXC ${container} CRITICAL - Used Swap: ${used_output}|swap=${used}B;${warningpf};${criticalpf};0;0"
