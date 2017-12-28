@@ -78,7 +78,7 @@ Options:\\n\\t-n name of container\\n\\t-t type to check (see list below)\\n\\t[
 Types:\\n\\tmem -> Check the memory usage of the given container (thresholds in percent)\\n\\tswap -> Check the swap usage (thresholds in MB)\\n\\tcpu -> Check cpu usage (percentage) of a container (thresholds in percent)\\n\\tauto -> Check autostart of container (-n ALL possible)"
 ################################################################################
 # Check for people who need help - aren't we all nice ;-)
-if [ "${1}" = "--help" -o "${#}" = "0" ];
+if [ "${1}" = "--help" ] || [ "${#}" = "0" ];
        then
        echo -e "${help}";
        exit 1;
