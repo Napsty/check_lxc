@@ -100,7 +100,7 @@ done
 ################################################################################
 # Check that all required options were given
 if [[ -z ${container} ]] || [[ -z ${type} ]]; then
-echo -e "${help}"; exit $STATE_UNKNOWN
+  echo -e "${help}"; exit $STATE_UNKNOWN
 fi
 ################################################################################
 # Functions
