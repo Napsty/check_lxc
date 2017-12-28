@@ -184,7 +184,7 @@ swap)   # Swap Check
         used=$(lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
 
         # When kernel is booted without swapaccount=1, swap value doesnt show up. This check doesnt make sense then.
-        if [[ -z $swap ]] || [[ $swap = "" ]]; then 
+        if [[ -z $used ]] || [[ $used = "" ]]; then
           echo "Swap value for ${container} cannot be read. Make sure you activate swapaccount=1 in kernel cmdline"
           exit $STATE_UNKNOWN
         fi
