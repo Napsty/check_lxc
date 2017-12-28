@@ -170,7 +170,7 @@ mem)    # Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgr
           elif [[ $used_perc -ge $warning ]]
                 then echo "LXC ${container} WARNING - Used Memory: ${used_perc}% (${used_output})|mem=${used}B;${warnvalue};${critvalue};0;${limit}"
                 exit $STATE_WARNING
-          else  echo "LXC ${container} OK - Used Memory: ${used_perc}% (${used_output})|mem=${used}B;${warnvalue};${critcalue};0;${limit}"
+          else  echo "LXC ${container} OK - Used Memory: ${used_perc}% (${used_output})|mem=${used}B;${warnvalue};${critvalue};0;${limit}"
                 exit $STATE_OK
           fi
         else echo "LXC ${container} OK - Used Memory: ${used_output}|mem=${used}B;0;0;0;0"; exit $STATE_OK
