@@ -181,7 +181,7 @@ swap)   # Swap Check
         cgroup_memory_active
 
         # Get the values
-        used=$(lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
+        used=$(lxc-cgroup -n "${container}" memory.stat | grep -E '^swap [[:digit:]]' | awk '{print $2}')
 
         # When kernel is booted without swapaccount=1, swap value doesnt show up. This check doesnt make sense then.
         if [[ -z $used ]] || [[ $used = "" ]]; then
