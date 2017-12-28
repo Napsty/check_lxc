@@ -106,8 +106,7 @@ fi
 # Functions
 lxc_running() {
 if [[ ${container} != "ALL" ]]; then
-  lxc-info -n ${container} >/dev/null 2>&1
-  if [[ $? -gt 0 ]]
+  if ! lxc-info -n "${container}" >/dev/null 2>&1
   then echo "LXC ${container} not found on system"; exit $STATE_CRITICAL
   else
     if [[ $(lxc-info -n ${container} | grep -i state | awk '{print $2}') = "STOPPED" ]]
