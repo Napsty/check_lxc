@@ -59,9 +59,10 @@ fi
 done
 ################################################################################
 # LXC 0.x and 1.x commands are different. The following lxc commands are required.
-lxcversion=$((lxc-version 2>/dev/null || lxc-start --version) | sed 's/.* //' | awk -F. '{print $1}')
+lxcversion=$( (lxc-version 2>/dev/null || lxc-start --version) | sed 's/.* //' | awk -F. '{print $1}' )
 
 if [[ $lxcversion -eq 0 ]]; then
+  # shellcheck disable=2043
   for cmd in lxc-list;
   do if ! which ${cmd} 1>/dev/null
     then echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
