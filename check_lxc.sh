@@ -74,8 +74,8 @@ fi
 # Mankind needs help
 help="$0 v ${version} (c) 2013-$(date +%Y) Claudio Kuenzler
 Usage: $0 -n container -t type [-u unit] [-w warning] [-c critical]
-Options:\n\t-n name of container\n\t-t type to check (see list below)\n\t[-u unit of output values (k|m|g)]\n\t[-w warning threshold] (for memory makes only sense if limit is set in lxc config)\n\t[-c critical threshold] (for memory makes only sense if limit is set in lxc config)\n\t[-s sleep in seconds between cpu checks]
-Types:\n\tmem -> Check the memory usage of the given container (thresholds in percent)\n\tswap -> Check the swap usage (thresholds in MB)\n\tcpu -> Check cpu usage (percentage) of a container (thresholds in percent)\n\tauto -> Check autostart of container (-n ALL possible)"
+Options:\\n\\t-n name of container\\n\\t-t type to check (see list below)\\n\\t[-u unit of output values (k|m|g)]\\n\\t[-w warning threshold] (for memory makes only sense if limit is set in lxc config)\\n\\t[-c critical threshold] (for memory makes only sense if limit is set in lxc config)\\n\\t[-s sleep in seconds between cpu checks]
+Types:\\n\\tmem -> Check the memory usage of the given container (thresholds in percent)\\n\\tswap -> Check the swap usage (thresholds in MB)\\n\\tcpu -> Check cpu usage (percentage) of a container (thresholds in percent)\\n\\tauto -> Check autostart of container (-n ALL possible)"
 ################################################################################
 # Check for people who need help - aren't we all nice ;-)
 if [ "${1}" = "--help" -o "${#}" = "0" ];
