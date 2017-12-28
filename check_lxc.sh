@@ -163,7 +163,7 @@ mem)    # Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgr
         if [[ -n $warning ]] && [[ -n $critical ]]
         then
           threshold_sense
-          warnvalue=$(( $limit / 100 * $warning )); critvalue=$(( $limit / 100 * $critical ))
+          warnvalue=$(( limit * warning / 100 )); critvalue=$(( limit * critical / 100 ))
           if [[ $used_perc -ge $critical ]]
                 then echo "LXC ${container} CRITICAL - Used Memory: ${used_perc}% (${used_output})|mem=${used}B;${warnvalue};${critvalue};0;${limit}"
                 exit $STATE_CRITICAL
