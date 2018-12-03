@@ -17,9 +17,10 @@
 # GNU General Public License for more details.                                 #
 #                                                                              #
 # You should have received a copy of the GNU General Public License            #
-# along with this program; if not, write to the Free Software                  #
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA                #
-# 02110-1301, USA.                                                             #
+# along with this program; if not, see <https://www.gnu.org/licenses/>.        #
+#                                                                              #
+# Copyright 2013,2016,2017,2018 Claudio Kuenzler                               #
+# Copyright 2017 Julien (BarbUk)                                               #
 #                                                                              #
 # History:                                                                     #
 # 20130830 Finished first check (mem)                                          #
@@ -38,11 +39,12 @@
 # 20160318 Add warn and crit values into mem check perfdata                    #
 # 20160318 Remove sudo commands within plugin, whole plugin requires sudo      #
 # 20170710 Added cpu check type                                                #
+# 20181203 Merged PR #4, #5 from BarbUk. Update GPL address. Increase version. #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
 # Definition of variables
-version="0.6.0"
+version="0.6.1"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
@@ -71,7 +73,7 @@ if [[ $lxcversion -eq 0 ]]; then
 fi
 ################################################################################
 # Mankind needs help
-help="$0 v ${version} (c) 2013-$(date +%Y) Claudio Kuenzler
+help="$0 v ${version} (c) 2013-$(date +%Y) Claudio Kuenzler and contributors.
 Usage: $0 -n container -t type [-u unit] [-w warning] [-c critical]
 Options:\n\t-n name of container\n\t-t type to check (see list below)\n\t[-u unit of output values (k|m|g)]\n\t[-w warning threshold] (for memory makes only sense if limit is set in lxc config)\n\t[-c critical threshold] (for memory makes only sense if limit is set in lxc config)\n\t[-s sleep in seconds between cpu checks]
 Types:\n\tmem -> Check the memory usage of the given container (thresholds in percent)\n\tswap -> Check the swap usage (thresholds in MB)\n\tcpu -> Check cpu usage (percentage) of a container (thresholds in percent)\n\tauto -> Check autostart of container (-n ALL possible)"
