@@ -40,7 +40,7 @@
 # 20160318 Remove sudo commands within plugin, whole plugin requires sudo      #
 # 20170710 Added cpu check type                                                #
 # 20181203 Merged PR #4, #5 from BarbUk. Update GPL address. Increase version. #
-# 20181204 Fix issue #9 (added lxc-cgroup sanity check)                        #
+# 20181203 Fix issue #9 (added lxc-cgroup sanity check)                        #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
