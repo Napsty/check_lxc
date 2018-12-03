@@ -40,11 +40,12 @@
 # 20160318 Remove sudo commands within plugin, whole plugin requires sudo      #
 # 20170710 Added cpu check type                                                #
 # 20181203 Merged PR #4, #5 from BarbUk. Update GPL address. Increase version. #
+# 20181204 Fix issue #9 (added lxc-cgroup sanity check)                        #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
 ################################################################################
 # Definition of variables
-version="0.6.1"
+version="0.6.2"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
@@ -152,6 +153,8 @@ mem)    # Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgr
         rss=$(lxc-cgroup -n ${container} memory.stat | egrep '^rss [[:digit:]]' | awk '{print $2}')
         cache=$(lxc-cgroup -n ${container} memory.stat | egrep '^cache [[:digit:]]' | awk '{print $2}')
         swap=$(lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
+        # Sanity check: Did we get values from lxc-cgroup command?
+        if [[ -z $rss ]] || [[ $rss = "" ]]; then echo "LXC ${container} UNKNOWN - lxc-cgroup command returned no values"; exit $STATE_UNKNOWN; fi
         # When kernel is booted without swapaccount=1, swap value doesnt show up. Assuming 0 in this case.
         if [[ -z $swap ]] || [[ $swap = "" ]]; then swap=0; fi
         used=$(( $rss + $cache + $swap))
@@ -184,7 +187,7 @@ swap)   # Swap Check
 
         # Get the values
         used=$(lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
-
+        
         # When kernel is booted without swapaccount=1, swap value doesnt show up. This check doesnt make sense then.
         if [[ -z $used ]] || [[ $used = "" ]]; then
           echo "Swap value for ${container} cannot be read. Make sure you activate swapaccount=1 in kernel cmdline"
@@ -252,6 +255,8 @@ cpu)    # CPU check
         # see https://www.kernel.org/doc/Documentation/cgroup-v1/cpuacct.txt
         proc1=$(cat /proc/stat | grep "^cpu ")
         cgroup1=$(lxc-cgroup -n ${container} cpuacct.stat)
+        # Sanity check: Did we get values from lxc-cgroup command?
+        if [[ -z $cgroup1 ]] || [[ $cgroup1 = "" ]]; then echo "LXC ${container} UNKNOWN - lxc-cgroup command returned no values"; exit $STATE_UNKNOWN; fi
         proccpu1=$(( $(echo $proc1 | awk -F' ' '{print $2}') + $(echo $proc1 | awk -F' ' '{print $4}') ))
         cgroupcpu1=$(( $(echo $cgroup1 | grep user | awk '{print $2}') + $(echo $cgroup1 | grep system | awk '{print $2}') ))
         sleep $sleep
