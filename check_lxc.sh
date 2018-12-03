@@ -55,7 +55,7 @@ PATH=/usr/local/bin:/usr/bin:/bin # Set path
 ################################################################################
 # The following base commands are required
 for cmd in grep egrep awk sed lxc-info lxc-ls lxc-cgroup;
-do if ! which ${cmd} 1>/dev/null
+do if ! command -v ${cmd} 1>/dev/null
   then echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
   exit ${STATE_UNKNOWN}
 fi
@@ -67,7 +67,7 @@ lxcversion=$( (lxc-version 2>/dev/null || lxc-start --version) | sed 's/.* //' |
 if [[ $lxcversion -eq 0 ]]; then
   # shellcheck disable=2043
   for cmd in lxc-list;
-  do if ! which ${cmd} 1>/dev/null
+  do if ! command -v ${cmd} 1>/dev/null
     then echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
     exit ${STATE_UNKNOWN}
   fi
