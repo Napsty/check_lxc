@@ -41,11 +41,12 @@
 # 20170710 Added cpu check type                                                #
 # 20181203 Merged PR #4, #5 from BarbUk. Update GPL address. Increase version. #
 # 20181203 Fix issue #9 (added lxc-cgroup sanity check)                        #
+# 20181204 Merged PR #6 from BarbUk (shellcheck)                               #
 ################################################################################
 # Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical]
 ################################################################################
 # Definition of variables
-version="0.6.2"
+version="0.6.3"
 STATE_OK=0              # define the exit code if status is OK
 STATE_WARNING=1         # define the exit code if status is Warning
 STATE_CRITICAL=2        # define the exit code if status is Critical
