@@ -20,7 +20,7 @@
 # along with this program; if not, see <https://www.gnu.org/licenses/>.        #
 #                                                                              #
 # Copyright 2013,2016,2017,2018 Claudio Kuenzler                               #
-# Copyright 2017 Julien (BarbUk)                                               #
+# Copyright 2017,2018 Julien (BarbUk)                                          #
 #                                                                              #
 # History:                                                                     #
 # 20130830 Finished first check (mem)                                          #
