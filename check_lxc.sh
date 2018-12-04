@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 ################################################################################
 # Script:       check_lxc.sh                                                   #
 # Author:       Claudio Kuenzler (www.claudiokuenzler.com)                     #
@@ -42,7 +42,7 @@
 # 20181203 Merged PR #4, #5 from BarbUk. Update GPL address. Increase version. #
 # 20181203 Fix issue #9 (added lxc-cgroup sanity check)                        #
 ################################################################################
-# Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical] 
+# Usage: ./check_lxc.sh -n container -t type [-w warning] [-c critical]
 ################################################################################
 # Definition of variables
 version="0.6.2"
@@ -54,19 +54,20 @@ sleep=5                 # define the sleep time between cpu checks
 PATH=/usr/local/bin:/usr/bin:/bin # Set path
 ################################################################################
 # The following base commands are required
-for cmd in grep egrep awk sed lxc-info lxc-ls lxc-cgroup; 
-do if ! `which ${cmd} 1>/dev/null`
+for cmd in grep egrep awk sed lxc-info lxc-ls lxc-cgroup;
+do if ! command -v ${cmd} 1>/dev/null
   then echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
   exit ${STATE_UNKNOWN}
 fi
 done
 ################################################################################
 # LXC 0.x and 1.x commands are different. The following lxc commands are required.
-lxcversion=$((lxc-version 2>/dev/null || lxc-start --version) | sed 's/.* //' | awk -F. '{print $1}')
+lxcversion=$( (lxc-version 2>/dev/null || lxc-start --version) | sed 's/.* //' | awk -F. '{print $1}' )
 
 if [[ $lxcversion -eq 0 ]]; then
-  for cmd in lxc-list; 
-  do if ! `which ${cmd} 1>/dev/null`
+  # shellcheck disable=2043
+  for cmd in lxc-list;
+  do if ! command -v ${cmd} 1>/dev/null
     then echo "UNKNOWN: ${cmd} does not exist, please check if command exists and PATH is correct"
     exit ${STATE_UNKNOWN}
   fi
@@ -76,11 +77,11 @@ fi
 # Mankind needs help
 help="$0 v ${version} (c) 2013-$(date +%Y) Claudio Kuenzler and contributors.
 Usage: $0 -n container -t type [-u unit] [-w warning] [-c critical]
-Options:\n\t-n name of container\n\t-t type to check (see list below)\n\t[-u unit of output values (k|m|g)]\n\t[-w warning threshold] (for memory makes only sense if limit is set in lxc config)\n\t[-c critical threshold] (for memory makes only sense if limit is set in lxc config)\n\t[-s sleep in seconds between cpu checks]
-Types:\n\tmem -> Check the memory usage of the given container (thresholds in percent)\n\tswap -> Check the swap usage (thresholds in MB)\n\tcpu -> Check cpu usage (percentage) of a container (thresholds in percent)\n\tauto -> Check autostart of container (-n ALL possible)"
+Options:\\n\\t-n name of container\\n\\t-t type to check (see list below)\\n\\t[-u unit of output values (k|m|g)]\\n\\t[-w warning threshold] (for memory makes only sense if limit is set in lxc config)\\n\\t[-c critical threshold] (for memory makes only sense if limit is set in lxc config)\\n\\t[-s sleep in seconds between cpu checks]
+Types:\\n\\tmem -> Check the memory usage of the given container (thresholds in percent)\\n\\tswap -> Check the swap usage (thresholds in MB)\\n\\tcpu -> Check cpu usage (percentage) of a container (thresholds in percent)\\n\\tauto -> Check autostart of container (-n ALL possible)"
 ################################################################################
 # Check for people who need help - aren't we all nice ;-)
-if [ "${1}" = "--help" -o "${#}" = "0" ];
+if [ "${1}" = "--help" ] || [ "${#}" = "0" ];
        then
        echo -e "${help}";
        exit 1;
@@ -101,18 +102,17 @@ do
 done
 ################################################################################
 # Check that all required options were given
-if [[ -z ${container} ]] || [[ -z ${type} ]]; then 
-echo -e "${help}"; exit $STATE_UNKNOWN
+if [[ -z ${container} ]] || [[ -z ${type} ]]; then
+  echo -e "${help}"; exit $STATE_UNKNOWN
 fi
 ################################################################################
 # Functions
 lxc_running() {
 if [[ ${container} != "ALL" ]]; then
-  lxc-info -n ${container} >/dev/null 2>&1
-  if [[ $? -gt 0 ]]
+  if ! lxc-info -n "${container}" >/dev/null 2>&1
   then echo "LXC ${container} not found on system"; exit $STATE_CRITICAL
-  else 
-    if [[ $(lxc-info -n ${container} | grep -i state | awk '{print $2}') = "STOPPED" ]]
+  else
+    if [[ $(lxc-info -n "${container}" | grep -i state | awk '{print $2}') = "STOPPED" ]]
     then echo "LXC ${container} not found or not running on system"; exit $STATE_CRITICAL
     fi
   fi
@@ -124,18 +124,18 @@ if [[ -z $warning ]] && [[ -n $critical ]]; then echo "Both warning and critical
 if [[ $warning -gt $critical ]]; then echo "Warning threshold cannot be greater than critical"; exit $STATE_UNKNOWN; fi
 }
 cgroup_memory_active() {
-if [[ $(cat /proc/cgroups | grep memory | awk '{print $4}') -eq 0 ]]; then echo "cgroup is not defined as kernel cmdline parameter (cgroup_enable=memory)"; exit $STATE_UNKNOWN; fi
+if [[ $(awk '/memory/ {print $4}' /proc/cgroups) -eq 0 ]]; then echo "cgroup is not defined as kernel cmdline parameter (cgroup_enable=memory)"; exit $STATE_UNKNOWN; fi
 }
 unit_calculate() {
 # Calculate wanted output - defaults to m
-if [[ -n ${unit} ]]; then 
+if [[ -n ${unit} ]]; then
   case ${unit} in
-  k)    used_output="$(( $used / 1024)) KB" ;;
-  m)    used_output="$(( $used / 1024 / 1024)) MB" ;;
-  g)    used_output="$(( $used / 1024 / 1024 / 1024)) GB" ;;
+  k)    used_output="$(( used / 1024)) KB" ;;
+  m)    used_output="$(( used / 1024 / 1024)) MB" ;;
+  g)    used_output="$(( used / 1024 / 1024 / 1024)) GB" ;;
   *)    echo -e "${help}"; exit $STATE_UNKNOWN;;
   esac
-else used_output="$(( $used / 1024 / 1024)) MB" 
+else used_output="$(( used / 1024 / 1024)) MB"
 fi
 }
 ################################################################################
@@ -150,32 +150,32 @@ mem)    # Memory Check - Reference: https://www.kernel.org/doc/Documentation/cgr
 
         # Get the values
         #used=$(lxc-cgroup -n ${container} memory.usage_in_bytes)
-        rss=$(lxc-cgroup -n ${container} memory.stat | egrep '^rss [[:digit:]]' | awk '{print $2}')
-        cache=$(lxc-cgroup -n ${container} memory.stat | egrep '^cache [[:digit:]]' | awk '{print $2}')
-        swap=$(lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
+        rss=$(lxc-cgroup -n "${container}" memory.stat | grep -E '^rss [[:digit:]]' | awk '{print $2}')
+        cache=$(lxc-cgroup -n "${container}" memory.stat | grep -E '^cache [[:digit:]]' | awk '{print $2}')
+        swap=$(lxc-cgroup -n "${container}" memory.stat | grep -E '^swap [[:digit:]]' | awk '{print $2}')
         # Sanity check: Did we get values from lxc-cgroup command?
         if [[ -z $rss ]] || [[ $rss = "" ]]; then echo "LXC ${container} UNKNOWN - lxc-cgroup command returned no values"; exit $STATE_UNKNOWN; fi
         # When kernel is booted without swapaccount=1, swap value doesnt show up. Assuming 0 in this case.
         if [[ -z $swap ]] || [[ $swap = "" ]]; then swap=0; fi
-        used=$(( $rss + $cache + $swap))
-	limit=$(lxc-cgroup -n ${container} memory.limit_in_bytes)
-        used_perc=$(( $used * 100 / $limit))
+        used=$(( rss + cache + swap))
+        limit=$(lxc-cgroup -n "${container}" memory.limit_in_bytes)
+        used_perc=$(( used * 100 / limit))
 
         # Calculate wanted output - defaults to m
-	unit_calculate
+        unit_calculate
 
         # Threshold checks
         if [[ -n $warning ]] && [[ -n $critical ]]
         then
           threshold_sense
-          warnvalue=$(( $limit / 100 * $warning )); critvalue=$(( $limit / 100 * $critical ))
+          warnvalue=$(( limit * warning / 100 )); critvalue=$(( limit * critical / 100 ))
           if [[ $used_perc -ge $critical ]]
                 then echo "LXC ${container} CRITICAL - Used Memory: ${used_perc}% (${used_output})|mem=${used}B;${warnvalue};${critvalue};0;${limit}"
                 exit $STATE_CRITICAL
           elif [[ $used_perc -ge $warning ]]
                 then echo "LXC ${container} WARNING - Used Memory: ${used_perc}% (${used_output})|mem=${used}B;${warnvalue};${critvalue};0;${limit}"
                 exit $STATE_WARNING
-          else  echo "LXC ${container} OK - Used Memory: ${used_perc}% (${used_output})|mem=${used}B;${warnvalue};${critcalue};0;${limit}"
+          else  echo "LXC ${container} OK - Used Memory: ${used_perc}% (${used_output})|mem=${used}B;${warnvalue};${critvalue};0;${limit}"
                 exit $STATE_OK
           fi
         else echo "LXC ${container} OK - Used Memory: ${used_output}|mem=${used}B;0;0;0;0"; exit $STATE_OK
@@ -186,8 +186,7 @@ swap)   # Swap Check
         cgroup_memory_active
 
         # Get the values
-        used=$(lxc-cgroup -n ${container} memory.stat | egrep '^swap [[:digit:]]' | awk '{print $2}')
-        
+        used=$(lxc-cgroup -n "${container}" memory.stat | grep -E '^swap [[:digit:]]' | awk '{print $2}')
         # When kernel is booted without swapaccount=1, swap value doesnt show up. This check doesnt make sense then.
         if [[ -z $used ]] || [[ $used = "" ]]; then
           echo "Swap value for ${container} cannot be read. Make sure you activate swapaccount=1 in kernel cmdline"
@@ -195,13 +194,13 @@ swap)   # Swap Check
         fi
 
         # Calculate wanted output - defaults to m
-	unit_calculate
+        unit_calculate
 
         # Threshold checks
         if [[ -n $warning ]] && [[ -n $critical ]]
         then
-	  warningpf=$(( $warning * 1024 * 1024 ))
-	  criticalpf=$(( $critical * 1024 * 1024 ))
+          warningpf=$(( warning * 1024 * 1024 ))
+          criticalpf=$(( critical * 1024 * 1024 ))
           threshold_sense
           if [[ $used -ge $criticalpf ]]
                 then echo "LXC ${container} CRITICAL - Used Swap: ${used_output}|swap=${used}B;${warningpf};${criticalpf};0;0"
@@ -214,16 +213,16 @@ swap)   # Swap Check
           fi
         else echo "LXC ${container} OK - Used Swap: ${used_output}|swap=${used}B;${warningpf};${criticalpf};0;0"; exit $STATE_OK
         fi
-	;;
+    ;;
 auto)   # Autostart check
         if [[ ${container} = "ALL" ]]
         # All containers
-        then 
+        then
           i=0
           for lxc in $(lxc-ls -1 | sort -u ); do
-            if [[ $(lxc-info -n ${lxc} -s | awk '{print $2}') = "RUNNING" ]]; then
+            if [[ $(lxc-info -n "${lxc}" -s | awk '{print $2}') = "RUNNING" ]]; then
               if [[ $lxcversion -eq 0 ]]; then
-                [[ -n $(lxc-list | grep ${lxc} | grep "(auto)") ]] || error[${i}]="${lxc} "
+                lxc-list | grep "${lxc}" | grep -q "(auto)" || error[${i}]="${lxc} "
               else
                 lxc-ls -f | awk '/'"${lxc}"/' {print $3}' | grep -qE 'YES|1' || error[${i}]="${lxc} "
               fi
@@ -234,10 +233,10 @@ auto)   # Autostart check
             then echo "LXC AUTOSTART CRITICAL: ${error[*]}"; exit $STATE_CRITICAL
           else echo "LXC AUTOSTART OK"; exit $STATE_OK
           fi
-        else 
+        else
         # Single container
-          if [[ $lxcversion -eq 0 ]]; then 
-            if [[ -z $(lxc-list | grep ${container} | grep "(auto)") ]]
+          if [[ $lxcversion -eq 0 ]]; then
+            if ! lxc-list | grep "${container}" | grep -q "(auto)"
             then echo "LXC AUTOSTART CRITICAL: ${container}"; exit $STATE_CRITICAL
             else echo "LXC AUTOSTART OK"; exit $STATE_OK
             fi
@@ -253,20 +252,20 @@ cpu)    # CPU check
         # Get CPU jiffies statistics globally (using /proc/stat) and from container using cgroups
         # see https://www.kernel.org/doc/Documentation/filesystems/proc.txt (1.8 Miscellaneous kernel statistics in /proc/stat)
         # see https://www.kernel.org/doc/Documentation/cgroup-v1/cpuacct.txt
-        proc1=$(cat /proc/stat | grep "^cpu ")
-        cgroup1=$(lxc-cgroup -n ${container} cpuacct.stat)
+        proc1=$(grep "^cpu " /proc/stat)
+        cgroup1=$(lxc-cgroup -n "${container}" cpuacct.stat)
         # Sanity check: Did we get values from lxc-cgroup command?
         if [[ -z $cgroup1 ]] || [[ $cgroup1 = "" ]]; then echo "LXC ${container} UNKNOWN - lxc-cgroup command returned no values"; exit $STATE_UNKNOWN; fi
-        proccpu1=$(( $(echo $proc1 | awk -F' ' '{print $2}') + $(echo $proc1 | awk -F' ' '{print $4}') ))
-        cgroupcpu1=$(( $(echo $cgroup1 | grep user | awk '{print $2}') + $(echo $cgroup1 | grep system | awk '{print $2}') ))
-        sleep $sleep
-        proc2=$(cat /proc/stat | grep "^cpu ")
-        cgroup2=$(lxc-cgroup -n ${container} cpuacct.stat)
-        proccpu2=$(( $(echo $proc2 | awk -F' ' '{print $2}') + $(echo $proc2 | awk -F' ' '{print $4}') ))
-        cgroupcpu2=$(( $(echo $cgroup2 | grep user | awk '{print $2}') + $(echo $cgroup2 | grep system | awk '{print $2}') ))
-        globaljiffies=$(( $proccpu2 - $proccpu1 ))
-        lxcjiffies=$(( $cgroupcpu2 - $cgroupcpu1 ))
-        lxcpercent=$(( $lxcjiffies * 100 / $globaljiffies))
+        proccpu1=$(( $(echo "$proc1" | awk -F' ' '{print $2}') + $(echo "$proc1" | awk -F' ' '{print $4}') ))
+        cgroupcpu1=$(( $(echo "$cgroup1" | grep user | awk '{print $2}') + $(echo "$cgroup1" | grep system | awk '{print $2}') ))
+        sleep "$sleep"
+        proc2=$(grep "^cpu " /proc/stat)
+        cgroup2=$(lxc-cgroup -n "${container}" cpuacct.stat)
+        proccpu2=$(( $(echo "$proc2" | awk -F' ' '{print $2}') + $(echo "$proc2" | awk -F' ' '{print $4}') ))
+        cgroupcpu2=$(( $(echo "$cgroup2" | grep user | awk '{print $2}') + $(echo "$cgroup2" | grep system | awk '{print $2}') ))
+        globaljiffies=$(( proccpu2 - proccpu1 ))
+        lxcjiffies=$(( cgroupcpu2 - cgroupcpu1 ))
+        lxcpercent=$(( lxcjiffies * 100 / globaljiffies))
 
          # Threshold checks
         if [[ -n $warning ]] && [[ -n $critical ]]
@@ -282,5 +281,5 @@ cpu)    # CPU check
           fi
         else echo "LXC ${container} OK - CPU Usage: ${lxcpercent}%|cpu=${lxcpercent}%;${warning};${critical};0;0"; exit $STATE_OK
         fi
-	;;
+    ;;
 esac
